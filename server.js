@@ -9,67 +9,64 @@ let users = [
 ];
 
 const server = createServer((req, res) => {
-    //Set Headers
-    res.setHeader("Content-Type", "application/json");
+  //Set Headers
+  res.setHeader("Content-Type", "application/json");
 
-    //Route: GET /api/users
-    if (req.url === '/api/users' && req.method === 'GET') {
-        res.write(JSON.stringify(users));
-        res.end();
-    }
-
-   else if (req.url.match(/^\/api\/users\/\d+$/) && req.method === "GET") {
-    const id = parseInt(req.url.split('/'[3]));
-    const user = users.find(u => u.id === id);
+  //Route: GET /api/users
+  if (req.url === "/api/users" && req.method === "GET") {
+    res.write(JSON.stringify(users));
+    res.end();
+  } else if (req.url.match(/^\/api\/users\/\d+$/) && req.method === "GET") {
+    const id = parseInt(req.url.split("/")[3]); // ✅ Fixed here
+    const user = users.find((u) => u.id === id);
 
     if (user) {
-        res.write(JSON.stringify(user));
+      res.write(JSON.stringify(user));
     } else {
-        res.statusCode = 400;
-        res.write(JSON.stringify({message: "User not found"}));
+      res.statusCode = 404; // ✅ Better status code for "not found"
+      res.write(JSON.stringify({ message: "User not found" }));
     }
     res.end();
-   }
+  }
 
-   //Route: POST /api/users
-   else if (req.url==='/api/users' && req.method === 'POST') {
+  //Route: POST /api/users
+  else if (req.url === "/api/users" && req.method === "POST") {
     let body = "";
 
-    req.on("data", chunk => {
-        body += chunk.toString();
+    req.on("data", (chunk) => {
+      body += chunk.toString();
     });
 
     req.on("end", () => {
-        const {name} = JSON.parse(body);
-        const newUser = {id:Date.now(), name};
-        users.push(newUser);
+      const { name, customers } = JSON.parse(body);
+      const newUser = { id: Date.now(), name, customers };
 
-        res.statusCode = 201;
-        res.write(JSON.stringify(newUser));
-        res.end();
+      users.push(newUser);
+
+      res.statusCode = 201;
+      res.write(JSON.stringify(newUser));
+      res.end();
     });
-   }
+  }
 
-   //Route: DELETE /api/users/:id
-   else if (req.url.match(/^\/api\/users\/\d+$/) && req.method === "DELETE") {
+  //Route: DELETE /api/users/:id
+  else if (req.url.match(/^\/api\/users\/\d+$/) && req.method === "DELETE") {
     const id = parseInt(req.url.split("/")[3]);
-    const userIndex = users.findIndex(u => u.id === id);
+    const userIndex = users.findIndex((u) => u.id === id);
 
     if (userIndex > -1) {
-        users.splice(userIndex, 1);
-        res.write(JSON.stringify({message: "User deleted"}));
+      users.splice(userIndex, 1);
+      res.write(JSON.stringify({ message: "User deleted" }));
     } else {
-        res.statusCode = 404;
-        res.write(JSON.stringify({message: "User not found"}));
+      res.statusCode = 404;
+      res.write(JSON.stringify({ message: "User not found" }));
     }
     res.end();
-   }
-
-   else {
+  } else {
     res.statusCode = 404;
-    res.write(JSON.stringify({message : "Route not found"}));
+    res.write(JSON.stringify({ message: "Route not found" }));
     res.end();
-   }
+  }
 });
 
 server.listen(PORT, () => {
